@@ -51,7 +51,7 @@ def perform_ocr(image, config=r'--oem 1 --psm 8 -c tessedit_char_whitelist=ABCDE
     """Perform OCR on the given image."""
     return pytesseract.image_to_string(image, config=config).strip()
 
-st.title("License Plate Detection with Model-Based Cropping")
+st.title("License Plate Detection with OCR")
 
 uploaded_image = st.file_uploader("Upload an image for OCR", type=["jpg", "jpeg", "png"])
 
