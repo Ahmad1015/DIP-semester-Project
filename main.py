@@ -51,6 +51,16 @@ def perform_ocr(image, config=r'--oem 1 --psm 8 -c tessedit_char_whitelist=ABCDE
     """Perform OCR on the given image."""
     return pytesseract.image_to_string(image, config=config).strip()
 
+def image_blurred(image):
+    kernel = np.array([[0, -1, 0],
+                       [-1, 5, -1],
+                       [0, -1, 0]])
+    
+    # Apply the filter to the image
+    sharpened_image = cv2.filter2D(image, -1, kernel)
+    
+    return sharpened_image
+
 st.title("License Plate Detection with OCR")
 
 uploaded_image = st.file_uploader("Upload an image for OCR", type=["jpg", "jpeg", "png"])
@@ -60,6 +70,12 @@ if uploaded_image:
     image = Image.open(uploaded_image)
     image = np.array(image)
     image = ensure_uint8(image)
+
+    laplacian_var = cv2.Laplacian(image, cv2.CV_64F).var()
+    if laplacian_var < 100:
+        st.warning("The uploaded image may be blurry. Please upload a clearer image for better results.")
+        st.warning("Trying to do OCR on Blurr Image")
+        image = image_blurred(image)
 
     # Convert RGBA to RGB if needed
     if image.shape[2] == 4:
