@@ -99,9 +99,8 @@ if uploaded_image:
         image = image_blurred(image)
         st.image(image, caption="After Applying Sharpening Filter", use_container_width=True)
     if detect_salt_pepper_noise(image):
-        st.warning("The uploaded image may contain salt-and-pepper noise. Please upload a cleaner image for better results.")
-        st.warning("Trying to do OCR on Noisy Image")
         image = cv2.medianBlur(image, 3)
+        st.warning("The uploaded image may contain salt-and-pepper noise. Applying median filter to remove noise.")
         st.image(image, caption="After Applying Median Filter with window size 3", use_container_width=True)
 
     # Convert RGBA to RGB if needed
