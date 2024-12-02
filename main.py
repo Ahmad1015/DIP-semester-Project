@@ -60,6 +60,25 @@ def image_blurred(image):
     sharpened_image = cv2.filter2D(image, -1, kernel)
     
     return sharpened_image
+def detect_salt_pepper_noise(image, threshold=0.01):
+    """
+    Detect the presence of salt-and-pepper noise in an image by analyzing pixel intensities.
+    
+    Parameters:
+    - image (numpy.ndarray): The input image.
+    - threshold (float): Proportion of pixels at 0 or 255 to consider noise.
+    
+    Returns:
+    - bool: True if noise is detected, otherwise False.
+    """
+    total_pixels = image.size
+    black_pixels = np.sum(image == 0)
+    white_pixels = np.sum(image == 255)
+    
+    # Calculate the proportion of extreme pixels
+    noise_ratio = (black_pixels + white_pixels) / total_pixels
+    return noise_ratio > threshold
+
 
 st.title("License Plate Detection with OCR")
 
@@ -71,17 +90,23 @@ if uploaded_image:
     image = np.array(image)
     image = ensure_uint8(image)
 
+    st.image(image, caption="Uploaded Image", use_container_width=True)
+
     laplacian_var = cv2.Laplacian(image, cv2.CV_64F).var()
     if laplacian_var < 100:
         st.warning("The uploaded image may be blurry. Please upload a clearer image for better results.")
         st.warning("Trying to do OCR on Blurr Image")
         image = image_blurred(image)
+        st.image(image, caption="After Applying Sharpening Filter", use_container_width=True)
+    if detect_salt_pepper_noise(image):
+        st.warning("The uploaded image may contain salt-and-pepper noise. Please upload a cleaner image for better results.")
+        st.warning("Trying to do OCR on Noisy Image")
+        image = cv2.medianBlur(image, 3)
+        st.image(image, caption="After Applying Median Filter with window size 3", use_container_width=True)
 
     # Convert RGBA to RGB if needed
     if image.shape[2] == 4:
         image = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
-
-    st.image(image, caption="Uploaded Image", use_container_width=True)
 
     # Get YOLO detections and use the first bounding box if available
     boxes = get_yolo_detections(image)
@@ -89,11 +114,11 @@ if uploaded_image:
         bbox = boxes[0]
         x1, y1, x2, y2 = bbox
         model_cropped_image = image[y1:y2, x1:x2]
-        st.image(model_cropped_image, caption="Model-Based Cropped License Plate", use_container_width=True)
+        st.image(model_cropped_image, caption="Cropping the Bounding Boxes returned by the Model", use_container_width=True)
 
         # Further process the model-cropped image to isolate central characters
         refined_cropped_plate = binary_and_contour_crop(model_cropped_image)
-        st.image(refined_cropped_plate, caption="Refined Cropped Black-and-White License Plate", use_container_width=True)
+        st.image(refined_cropped_plate, caption="Binarization of our Image", use_container_width=True)
 
         # Perform OCR on the refined cropped image
         ocr_result = perform_ocr(refined_cropped_plate)
