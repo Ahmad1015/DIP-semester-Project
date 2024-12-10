@@ -1,0 +1,9 @@
+opencv-python
+numpy
+pytesseract
+streamlit
+Pillow
+ultralytics
+torch
+torchvision
+torchaudio
